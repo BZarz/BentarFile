@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BentarFile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      background: url('/static/tes.jpg') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.422);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease-in-out;
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen px-4 text-white">
+
+  <div class="glass max-w-md w-full p-8">
+    <h1 class="text-2xl font-bold mb-6 text-center tracking-wider">BentarFile</h1>
+
+    <form id="uploadForm" class="space-y-4" enctype="multipart/form-data">
+      <label for="file" id="dropArea" class="block cursor-pointer bg-black/50 backdrop-blur-sm border-2 border-dashed border-white/30 p-6 rounded-xl text-center hover:border-blue-400 shadow-inner transition-all">
+        <div id="uploadIconContainer" class="text-4xl mb-2 flex justify-center">
+          <i data-lucide="upload-cloud" class="w-8 h-8"></i>
+        </div>
+        <p id="uploadText" class="text-lg font-medium">Tarik atau Klik Untuk Mengupload File</p>
+        <p id="dec" class="text-sm text-white/60">Maksimal ukuran file 10mb & file akan dihapus setelah 10 menit.</p>
+      </label>
+
+      <input type="file" name="file" id="file" class="hidden" required />
+
+      <div id="notif" class="text-sm text-green-400 text-center hidden mt-2"></div>
+
+      <!-- Hasil Upload -->
+      <div id="resultContainer" class="relative mt-4 hidden">
+        <input type="text" readonly id="downloadLink"
+          class="bg-black/30 backdrop-blur-md border border-white/20 text-white p-2 pr-12 rounded-lg w-full placeholder-white/60 shadow-inner focus:outline-none focus:ring-2 focus:ring-white/20 transition-all duration-200" />
+
+        <button id="copyBtn" type="button"
+          class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm bg-black/40 backdrop-blur-md border border-white/30 px-2 py-1 rounded-lg hover:bg-black/50 hover:shadow-md flex items-center justify-center transition-all duration-200">
+          <i data-lucide="copy" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Notif Copy -->
+      <div id="copyNotif" class="text-center text-sm text-green-400 mt-2 hidden">✅ Link berhasil disalin!</div>
+    </form>
+
+    <div class="flex justify-center items-center mt-6 text-white/70 text-sm">
+      <a href="#" class="hover:text-white flex items-center gap-1 transition">
+        <i data-lucide="instagram" class="w-4 h-4"></i>yunizarrrrz
+      </a>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    const fileInput = document.getElementById('file');
+    const dec = document.getElementById("dec");
+    const uploadText = document.getElementById('uploadText');
+    const iconBox = document.getElementById('uploadIconContainer');
+    const notif = document.getElementById('notif');
+    const resultContainer = document.getElementById('resultContainer');
+    const downloadLink = document.getElementById('downloadLink');
+    const copyBtn = document.getElementById('copyBtn');
+    const copyNotif = document.getElementById('copyNotif');
+
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      uploadText.innerText = `${file.name} sedang di-upload...`;
+      dec.innerText = ``;
+      iconBox.innerHTML = `<i data-lucide="loader" class="w-8 h-8 animate-spin"></i>`;
+      lucide.createIcons();
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (data.download_url) {
+          downloadLink.value = data.download_url;
+          resultContainer.classList.remove('hidden');
+          notif.innerText = "";
+        } else {
+          notif.innerText = "❌ Gagal upload.";
+        }
+      } catch (err) {
+        notif.innerText = "❌ Error saat upload.";
+      }
+
+      iconBox.innerHTML = `<i data-lucide="check" class="w-8 h-8"></i>`;
+      lucide.createIcons();
+      uploadText.innerText = "Upload Berhasil.";
+      dec.innerText = "Copy link di bawah untuk mendownload.";
+      notif.classList.remove('hidden');
+    });
+
+    copyBtn.addEventListener('click', () => {
+      const link = downloadLink.value;
+      if (link) {
+        navigator.clipboard.writeText(link);
+        copyNotif.classList.remove('hidden');
+        setTimeout(() => {
+          copyNotif.classList.add('hidden');
+        }, 2000);
+      }
+    });
+  </script>
+</body>
+</html>
